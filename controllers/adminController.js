@@ -1,7 +1,8 @@
 const db = require("../db/databse")
 const Admin = require("../models/Admin");
 const Admins = db.Admin
-
+const service = require("../models/services");
+const services = db.services
 /**
  *  Get all documents of a Model
  *  @param {Object} req.params
@@ -129,60 +130,128 @@ exports.read = async (req, res) => {
  *  @returns {string} Message
  */
 
-exports.create = async (req, res) => {
+// exports.create = async (req, res) => {
+//   try {
+//     let { email, password } = req.body;
+//     if (!email || !password)
+//       return res.status(400).json({
+//         success: false,
+//         result: null,
+//         message: "Email or password fields they don't have been entered.",
+//       });
+
+//     const existingAdmin = await Admin.findOne({ email: email });
+
+//     if (existingAdmin)
+//       return res.status(400).json({
+//         success: false,
+//         result: null,
+//         message: "An account with this email already exists.",
+//       });
+
+//     if (password.length < 8)
+//       return res.status(400).json({
+//         success: false,
+//         result: null,
+//         message: "The password needs to be at least 8 characters long.",
+//       });
+
+//     var newAdmin = new Admin();
+//     const passwordHash = newAdmin.generateHash(password);
+//     req.body.password = passwordHash;
+
+//     const result = await new Admin(req.body).save();
+//     if (!result) {
+//       return res.status(403).json({
+//         success: false,
+//         result: null,
+//         message: "document couldn't save correctly",
+//       });
+//     }
+//     return res.status(200).send({
+//       success: true,
+//       result: {
+//         _id: result._id,
+//         enabled: result.enabled,
+//         email: result.email,
+//         name: result.name,
+//         surname: result.surname,
+//       },
+//       message: "Admin document save correctly",
+//     });
+//   } catch {
+//     return res.status(500).json({ success: false, message: "there is error" });
+//   }
+// };
+
+
+exports.createService = async (req, res, next) => {
   try {
-    let { email, password } = req.body;
-    if (!email || !password)
-      return res.status(400).json({
-        success: false,
-        result: null,
-        message: "Email or password fields they don't have been entered.",
-      });
+    const { name, description, seo_title, seo_description, seo_slug, seo_tags } = req.body;
 
-    const existingAdmin = await Admin.findOne({ email: email });
-
-    if (existingAdmin)
-      return res.status(400).json({
-        success: false,
-        result: null,
-        message: "An account with this email already exists.",
-      });
-
-    if (password.length < 8)
-      return res.status(400).json({
-        success: false,
-        result: null,
-        message: "The password needs to be at least 8 characters long.",
-      });
-
-    var newAdmin = new Admin();
-    const passwordHash = newAdmin.generateHash(password);
-    req.body.password = passwordHash;
-
-    const result = await new Admin(req.body).save();
-    if (!result) {
-      return res.status(403).json({
-        success: false,
-        result: null,
-        message: "document couldn't save correctly",
-      });
-    }
-    return res.status(200).send({
-      success: true,
-      result: {
-        _id: result._id,
-        enabled: result.enabled,
-        email: result.email,
-        name: result.name,
-        surname: result.surname,
+    const existingService = await services.findOne({
+      where: {
+        name: name.toLowerCase(),
       },
-      message: "Admin document save correctly",
     });
-  } catch {
-    return res.status(500).json({ success: false, message: "there is error" });
+
+    if (existingService) {
+      return res.status(400).json({ success: false, message: 'Service already exists.' });
+    }
+
+    const status = 1;
+
+    const newService = await services.create({
+      name: name.toLowerCase(),
+      description: description,
+      status: status,
+      seo_title: seo_title,
+      seo_description: seo_description,
+      seo_slug: seo_slug,
+      seo_tags: seo_tags,
+    });
+
+    return res.status(200).json({
+      success: true,
+      service: { ...newService.toJSON(), status: status },
+      message: 'Service created successfully.',
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: 'Oops! Error in Server' });
   }
 };
 
+
+exports.getServices = async (req, res, next) => {
+  try {
+    const service = await services.findAll();
+
+    const formattedServices = service.map(service => {
+      return {
+        service_id: service.service_id,
+        name: service.name,
+        description: service.description,
+        status: service.status,
+        seo_title: service.seo_title,
+        seo_description: service.seo_description,
+        seo_slug: service.seo_slug,
+        seo_tags: JSON.parse(service.seo_tags),
+        createdAt: service.createdAt,
+        updatedAt: service.updatedAt,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      services: formattedServices,
+      message: 'Services found successfully',
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: 'Oops! Error in Server' });
+  }
+};
 /**
  *  Updates a Single document
  *  @param {object, string} (req.body, req.params.id)

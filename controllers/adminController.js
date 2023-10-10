@@ -3,6 +3,9 @@ const Admin = require("../models/Admin");
 const Admins = db.Admin
 const service = require("../models/services");
 const services = db.services
+const session = require("../models/services");
+const Sessions = db.session
+
 /**
  *  Get all documents of a Model
  *  @param {Object} req.params
@@ -258,6 +261,150 @@ exports.getServices = async (req, res, next) => {
  *  @returns {Document} Returns updated document
  */
 
+
+
+
+exports.deleteService = async (req, res, next) => {
+  try {
+    const { service_id } = req.params;
+    const service = await services.findByPk(service_id);
+    if (!service) {
+      return res.status(404).json({ success: false, message: 'Service not found.' });
+    }
+
+    await service.update({ status: 0 });
+
+    return res.status(200).json({ success: true, message: 'Service soft deleted successfully.' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: 'Oops! Error in Server' });
+  }
+};
+
+
+
+exports.updateService = async (req, res, next) => {
+  try {
+    const { service_id } = req.params;
+    const { name, description, seo_title, seo_description, seo_slug, seo_tags } = req.body;
+
+    const service = await services.findByPk(service_id);
+    if (!service) {
+      return res.status(404).json({ success: false, message: 'Service not found.' });
+    }
+    const newService = await services.update({
+      name: name.toLowerCase(),
+      description: description,
+      seo_title: seo_title,
+      seo_description: seo_description,
+      seo_slug: seo_slug,
+      seo_tags: seo_tags
+  },{where:{service_id:service_id}});
+  return res.status(200).json({ success: true, message: 'Service updated successfully.',service: newService});
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: 'Oops! Error in Server' });
+  }
+};
+
+exports.createSession = async (req, res, next) => {
+  try {
+      const { service_id, session_description, instructor_name, session_duration, date, session_pricing, session_type, slug, seo_title, start_time, end_time } = req.body;
+      const status = 1;
+
+      const existingSession = await Sessions.findOne({
+        where: {
+          service_id: service_id,
+          date:date,
+          start_time: start_time,
+          end_time: end_time,
+        }
+      });
+  
+      if (existingSession) {
+        return res.status(400).json({ success: false, message: 'Session with the same time and date already exists for this service.' });
+      }
+      const newSession = await Sessions.create({
+          service_id: service_id,
+          session_description: session_description,
+          instructor_name: instructor_name,
+          session_duration: session_duration,
+          date: date,
+          start_time: start_time,
+          end_time: end_time,
+          session_pricing: session_pricing,
+          session_type: session_type,
+          slug: slug,
+          seo_title: seo_title,
+          status: status
+      });
+
+      return res.status(200).json({
+          success: true,
+          session: { ...newSession.toJSON(), status: status },
+          message: 'Session created successfully.'
+      });
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: 'Oops! Error in Server' });
+  }
+};
+
+
+exports.updateSession = async (req, res, next) => {
+  try {
+      const session_id = req.query.session_id;
+      const {
+          session_description, instructor_name, session_duration, date,
+          session_pricing, session_type, slug, seo_title, status, start_time, end_time
+      } = req.body;
+
+      const [rowsUpdated, updatedSessions] = await sessions.update(
+          {
+              session_description: session_description,
+              instructor_name: instructor_name,
+              session_duration: session_duration,
+              date: date,
+              start_time: start_time,
+              end_time: end_time,
+              session_pricing: session_pricing,
+              session_type: session_type,
+              slug: slug,
+              seo_title: seo_title,
+              status: status
+          },
+          { where: { session_id: session_id }, returning: true }
+      );
+
+      if (rowsUpdated === 0) {
+          return res.status(404).json({ status: false, message: 'Session not found.' });
+      }
+
+      return res.status(200).json({ status: true, message: 'Session updated successfully!', Data: updatedSessions[0] });
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({ status: false, message: 'Oops! Error in Server' });
+  }
+};
+
+exports.blockSession = async (req, res, next) => {
+  try {
+      const session_id = req.query.session_id;
+      const [rowsUpdated, blockedSessions] = await Sessions.update(
+          { status: 2 },
+          { where: { session_id: session_id }, returning: true }
+      );
+
+      if (rowsUpdated === 0) {
+          return res.status(404).json({ status: false, message: 'Session not found.' });
+      }
+
+      return res.status(200).json({ status: true, message: 'This Session has been blocked successfully!', Data: [] });
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({ status: false, message: 'Oops! Error in Server' });
+  }
+};
 exports.update = async (req, res) => {
   try {
     let { email } = req.body;

@@ -22,6 +22,7 @@ db.Sequelize = Sequelize;
 db.sequelize=sequelize;
 db.Admin = require('../models/Admin')(sequelize,Sequelize);
 db.services = require('../models/services')(sequelize,Sequelize);
+db.session = require('../models/session')(sequelize,Sequelize);
 db.sequelize.sync({force:false}).
 then(()=>{
     console.log("yes re-sync")

@@ -11,6 +11,8 @@ const authApiRouter = require("./routes/authApi");
 const errorHandlers = require("./handlers/errorHandlers");
 
 const { isValidToken } = require("./controllers/authController");
+const ErrorHandler = require("./middleware/error");
+const SuccessHandler = require("./middleware/success");
 
 require("dotenv").config({ path: ".variables.env" });
 
@@ -75,7 +77,8 @@ app.use("/api", apiRouter);
 
 // If that above routes didnt work, we 404 them and forward to error handler
 app.use(errorHandlers.notFound);
-
+app.use(ErrorHandler);
+app.use(SuccessHandler);
 // Otherwise this was a really bad error we didn't expect! Shoot eh
 if (app.get("env") === "development") {
   /* Development Error Handler - Prints stack trace */

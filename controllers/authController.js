@@ -4,7 +4,8 @@ const Admins = db.Admin;
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const jwtSec = 'your-secret-key';
-
+const ErrorHandler = require("../utils/ErrorHandler")
+const SuccessHandler = require("../utils/succesHandler")
 
 require("dotenv").config({ path: ".variables.env" });
 
@@ -58,68 +59,46 @@ exports.register = async (req, res) => {
 };
 
 
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // validate
     if (!email || !password) {
-      return res.status(400).json({ msg: 'Not all fields have been entered.' });
+      return next(new ErrorHandler('Not all fields have been entered.', false, ));
     }
 
     const admin = await Admins.findOne({ where: { email: email } });
-    console.log(admin)
+
     if (!admin) {
-      return res.status(400).json({
-        success: false,
-        result: null,
-        message: 'No account with this email has been registered.',
-      });
+      return next(new ErrorHandler('No account with this email has been registered.', false, ));
     }
-
-    // const isMatch = await bcrypt.compare(password, admin.password);
-    if (!password) {
-      return res.status(400).json({
-        success: false,
-        result: null,
-        message: 'Invalid credentials.',
-      });
+    if (password !== admin.password) {
+      return next(new ErrorHandler("password Doesn't match.", false, ));
     }
-
+    
     const payload = {
       exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
-        id: admin.admin_id,
+      id: admin.admin_id,
     };
-  
+
     const token = jwt.sign(payload, 'jwtSec');
-    // const token = jwt.sign(
-    //   {
-    //     exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
-    //     id: admin.admin_id, // Assuming your primary key field is named 'admin_id'
-    //   },
-    //   process.env.JWT_SECRET
-    // );
 
-    const updatedAdmin = await Admins.update(
-      { isLoggedIn: true },
-      { where: { admin_id: admin.admin_id } }
-    );
+    // Update isLoggedIn status in the database
+    await Admins.update({ isLoggedIn: true }, { where: { admin_id: admin.admin_id } });
 
-    res.json({
-      success: true,
-      result: {
-        token,
-        admin: {
-          id: admin.admin_id, // Assuming your primary key field is named 'admin_id'
-          name: admin.name,
-          isLoggedIn: true,
-        },
-      },
-      message: 'Successfully login admin',
-    });
+    const successHandler = new SuccessHandler({
+      token: token,
+      admin: {
+        id: admin.admin_id,
+        name: admin.name,
+        isLoggedIn: true,
+      }
+    }, 'Successfully login admin');
+
+    return successHandler.send(res, 200);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, result: null, message: err.message });
+    return next(new ErrorHandler(err.message, false, 500));
   }
 };
 

@@ -1,12 +1,16 @@
-const db = require("../db/databse")
+const moment = require('moment');
+const  {Op}  = require('sequelize');
+const db = require("../db/databse");
 const Admin = require("../models/Admin");
-const Admins = db.Admin
+const Admins = db.Admin;
 const service = require("../models/services");
-const services = db.services
+const services = db.services;
 const session = require("../models/services");
-const Sessions = db.session
-const ErrorHandler = require("../utils/ErrorHandler")
-const SuccessHandler = require("../utils/succesHandler")
+const Sessions = db.session;
+const ErrorHandler = require("../utils/ErrorHandler");
+const SuccessHandler = require("../utils/succesHandler");
+
+
 /**
  *  Get all documents of a Model
  *  @param {Object} req.params
@@ -134,69 +138,79 @@ exports.read = async (req, res) => {
  *  @returns {string} Message
  */
 
-
-
 exports.createService = async (req, res, next) => {
   try {
-      const { name, description ,seo_title,seo_description,seo_slug,seo_tags} = req.body;
-      const existingService = await services.findOne({
-          where: {
-              name: name
-          },
-      });
+    const {
+      name,
+      description,
+      seo_title,
+      seo_description,
+      seo_slug,
+      seo_tags,
+    } = req.body;
+    const existingService = await services.findOne({
+      where: {
+        name: name,
+      },
+    });
 
-      if (existingService) {
-          return next(new ErrorHandler("Service already exists."));
-      }
-     
-      const status = 1;
+    if (existingService) {
+      return next(new ErrorHandler("Service already exists."));
+    }
 
-      const newService = await services.create({
-          name: name.toLowerCase(),
-          description: description,
+    const status = 1;
+
+    const newService = await services.create({
+      name: name.toLowerCase(),
+      description: description,
+      status: status,
+      seo_title: seo_title,
+      seo_description: seo_description,
+      seo_slug: seo_slug,
+      seo_tags: seo_tags,
+    });
+
+    const successHandler = new SuccessHandler(
+      {
+        service: {
+          ...newService.toJSON(),
           status: status,
-          seo_title: seo_title,
-          seo_description: seo_description,
-          seo_slug: seo_slug,
-          seo_tags: seo_tags
-      });
+        },
+      },
+      "Service created successfully."
+    );
 
-      const successHandler = new SuccessHandler({
-          service: {
-              ...newService.toJSON(), 
-              status: status 
-          }
-      }, 'Service created successfully.');
-
-      return successHandler.send(res, 200);
+    return successHandler.send(res, 200);
   } catch (error) {
-      return next(new ErrorHandler(error.message, false, 200));
+    return next(new ErrorHandler(error.message, false, 200));
   }
 };
 
-
 exports.getServices = async (req, res, next) => {
   try {
-      const service = await services.findAll();
-      const formattedServices = service.map(service => {
-          return {
-              service_id: service.service_id,
-              name: service.name,
-              description: service.description,
-              status: service.status, 
-              seo_title: service.seo_title,
-              seo_description: service.seo_description,
-              seo_slug: service.seo_slug,
-              seo_tags: JSON.parse(service.seo_tags),
-              createdAt: service.createdAt,
-              updatedAt: service.updatedAt
-          };
-      });
+    const service = await services.findAll();
+    const formattedServices = service.map((service) => {
+      return {
+        service_id: service.service_id,
+        name: service.name,
+        description: service.description,
+        status: service.status,
+        seo_title: service.seo_title,
+        seo_description: service.seo_description,
+        seo_slug: service.seo_slug,
+        seo_tags: JSON.parse(service.seo_tags),
+        createdAt: service.createdAt,
+        updatedAt: service.updatedAt,
+      };
+    });
 
-      const successResponse = new SuccessHandler({ services: formattedServices}, 'Services found successfully');
-      return successResponse.send(res, 200);
+    const successResponse = new SuccessHandler(
+      { services: formattedServices },
+      "Services found successfully"
+    );
+    return successResponse.send(res, 200);
   } catch (error) {
-      return next(new ErrorHandler(error.message));
+    return next(new ErrorHandler(error.message));
   }
 };
 
@@ -211,10 +225,9 @@ exports.getServicesById = async (req, res, next) => {
     const { service_id } = req.params;
 
     const service = await services.findByPk(service_id);
-console.log(service)
+    console.log(service);
     if (!service) {
-  
-      return next(new ErrorHandler('service not found.'));
+      return next(new ErrorHandler("service not found."));
     }
 
     const formattedService = {
@@ -227,77 +240,96 @@ console.log(service)
       seo_slug: service.seo_slug,
       seo_tags: JSON.parse(service.seo_tags),
       createdAt: service.createdAt,
-      updatedAt: service.updatedAt
+      updatedAt: service.updatedAt,
     };
-  
-    const successResponse = new SuccessHandler({ service: formattedService }, 'service found successfully.');
+
+    const successResponse = new SuccessHandler(
+      { service: formattedService },
+      "service found successfully."
+    );
     return successResponse.send(res, 200);
   } catch (error) {
-  
-    return next(new ErrorHandler('service not found.'));
+    return next(new ErrorHandler("service not found."));
   }
 };
 
-
 exports.deactiveService = async (req, res, next) => {
   try {
-      const { service_id } = req.params;
-      const service = await services.findByPk(service_id);
-      if (!service) {
-          return next(new ErrorHandler('Service not found.'));
-      }
-      await service.update({ status: 0 });
-      const successResponse = new SuccessHandler({}, 'Service soft deleted successfully.');
-      return successResponse.send(res, 200);
+    const { service_id } = req.params;
+    const service = await services.findByPk(service_id);
+    if (!service) {
+      return next(new ErrorHandler("Service not found."));
+    }
+    await service.update({ status: 0 });
+    const successResponse = new SuccessHandler(
+      {},
+      "Service soft deleted successfully."
+    );
+    return successResponse.send(res, 200);
   } catch (error) {
-      return next(new ErrorHandler(error.message));
+    return next(new ErrorHandler(error.message));
   }
 };
 
 exports.activeService = async (req, res, next) => {
   try {
-      const { service_id } = req.params;
-      const service = await services.findByPk(service_id);
-      if (!service) {
-          return next(new ErrorHandler('Service not found.'));
-      }
-      await service.update({ status: 1 });
-      const successResponse = new SuccessHandler({}, 'Service active  successfully.');
-      return successResponse.send(res, 200);
+    const { service_id } = req.params;
+    const service = await services.findByPk(service_id);
+    if (!service) {
+      return next(new ErrorHandler("Service not found."));
+    }
+    await service.update({ status: 1 });
+    const successResponse = new SuccessHandler(
+      {},
+      "Service active  successfully."
+    );
+    return successResponse.send(res, 200);
   } catch (error) {
-      return next(new ErrorHandler(error.message));
+    return next(new ErrorHandler(error.message));
   }
 };
 
-
 exports.updateService = async (req, res, next) => {
   try {
-      const { service_id } = req.params;
-      const { name, description ,seo_title,seo_description,seo_slug,seo_tags} = req.body;
-      const service = await services.findByPk(service_id);
-      if (!service) {
-          return next(new ErrorHandler('Service not found.'));
-      }
-       const newServices = await services.update({
+    const { service_id } = req.params;
+    const {
+      name,
+      description,
+      seo_title,
+      seo_description,
+      seo_slug,
+      seo_tags,
+    } = req.body;
+    const service = await services.findByPk(service_id);
+    if (!service) {
+      return next(new ErrorHandler("Service not found."));
+    }
+    const newServices = await services.update(
+      {
         name: name.toLowerCase(),
-          description: description,
-          seo_title: seo_title,
-          seo_description: seo_description,
-          seo_slug: seo_slug,
-          seo_tags: seo_tags
-    },{where:{service_id:service_id}});
+        description: description,
+        seo_title: seo_title,
+        seo_description: seo_description,
+        seo_slug: seo_slug,
+        seo_tags: seo_tags,
+      },
+      { where: { service_id: service_id } }
+    );
 
     const updatedService = await services.findByPk(service_id);
     updatedService.seo_tags = JSON.parse(updatedService.seo_tags);
-    const successHandler = new SuccessHandler({
-      service: {
-        ...updatedService.toJSON(),
-        status: service.status  
-      }
-    }, 'Service updated successfully.');
+    const successHandler = new SuccessHandler(
+      {
+        service: {
+          ...updatedService.toJSON(),
+          status: service.status,
+        },
+      },
+      "Service updated successfully."
+    );
     return successHandler.send(res, 200);
   } catch (error) {
-      return next(new ErrorHandler(error.message));
+    return next(new ErrorHandler(error.message));
   }
 };
 
@@ -309,29 +341,68 @@ exports.createSession = async (req, res, next) => {
       instructor_name,
       session_duration,
       date,
+      start_time,
+      end_time,
       session_pricing,
       session_type,
       slug,
       seo_title,
-      start_time,
-      end_time
     } = req.body;
 
     const status = 1;
+    const parsedStartTime = moment(`${date} ${start_time}`, 'DD/MM/YY hh:mm A');
+    const parsedEndTime = moment(`${date} ${end_time}`, 'DD/MM/YY hh:mm A');
 
-    const existingSession = await Sessions.findOne({
+    // Check if the exact start or end time session already exists
+    const exactStartSession = await Sessions.findOne({
       where: {
         service_id: service_id,
         date: date,
-        start_time: start_time,
-        end_time: end_time,
-      }
+        start_time: parsedStartTime.format('HH:mm'),
+      },
     });
 
-    if (existingSession) {
-      return next(new ErrorHandler('Session with the same time and date already exists for this service.', false,));
-    
+    const exactEndSession = await Sessions.findOne({
+      where: {
+        service_id: service_id,
+        date: date,
+        end_time: parsedEndTime.format('HH:mm'),
+      },
+    });
+
+    if (exactStartSession || exactEndSession) {
+      return next(
+        new ErrorHandler('Session with the exact start or end time already exists for this service.', false)
+      );
     }
+
+    // Check for overlapping time with existing sessions
+    const overlappingSessions = await Sessions.findAll({
+      where: {
+        service_id: service_id,
+        date: date,
+        [Op.or]: [
+          {
+            start_time: {
+              [Op.between]: [parsedStartTime.format('HH:mm'), parsedEndTime.format('HH:mm')],
+            },
+          },
+          {
+            end_time: {
+              [Op.between]: [parsedStartTime.format('HH:mm'), parsedEndTime.format('HH:mm')],
+            },
+          },
+        ],
+      },
+    });
+
+    if (overlappingSessions.length > 0) {
+      return next(
+        new ErrorHandler('Session with overlapping time already exists for this service.', false)
+      );
+    }
+    
+  
 
     const newSession = await Sessions.create({
       service_id: service_id,
@@ -339,21 +410,24 @@ exports.createSession = async (req, res, next) => {
       instructor_name: instructor_name,
       session_duration: session_duration,
       date: date,
-      start_time: start_time,
-      end_time: end_time,
+      start_time: parsedStartTime.format('HH:mm'),
+      end_time: parsedEndTime.format('HH:mm'),
       session_pricing: session_pricing,
       session_type: session_type,
       slug: slug,
       seo_title: seo_title,
-      status: status
+      status: status,
     });
 
-    const successHandler = new SuccessHandler({
-      session: {
-        ...newSession.toJSON(),
-        status: status
-      }
-    }, 'Session created successfully.');
+    const successHandler = new SuccessHandler(
+      {
+        session: {
+          ...newSession.toJSON(),
+          status: status,
+        },
+      },
+      'Session created successfully.'
+    );
 
     return successHandler.send(res, 200);
   } catch (error) {
@@ -361,85 +435,111 @@ exports.createSession = async (req, res, next) => {
   }
 };
 
+exports.updateSession = async (req, res, next) => {
+  try {
+    const session_id = req.query.session_id;
+    const {
+      session_description,
+      instructor_name,
+      session_duration,
+      date,
+      session_pricing,
+      session_type,
+      slug,
+      seo_title,
+      status,
+      start_time,
+      end_time,
+    } = req.body;
 
-exports.updateSession = async (req,res,next) => {
-    try{
-        const session_id = req.query.session_id;
-        const {session_description,
-            instructor_name,session_duration,date,
-            session_pricing,session_type,slug,
-            seo_title,status,start_time,end_time} = req.body;
-            
-            const session = await Sessions.findByPk(session_id);
-            if (!session) {
-                return next(new ErrorHandler('Session not found.'));
-            }
-        const newSession = await Sessions.update({
-            session_description:session_description,
-            instructor_name:instructor_name,
-            session_duration:session_duration,
-            date:date,
-            start_time:start_time,
-            end_time:end_time,
-            session_pricing:session_pricing,
-            session_type: session_type,
-            slug:slug,
-            seo_title:seo_title,
-            status: status
-        },{where:{session_id:session_id}});
-        const updatedSession = await Sessions.findByPk(session_id);
-     
-    const successHandler = new SuccessHandler({
-      session: {
-        ...updatedSession.toJSON(),  
-      }
-    }, 'Session updated successfully.');
-       
-      return successHandler.send(res, 200);
-    }catch (error) {
-        return next(new ErrorHandler(error.message, false, 200));
+    const session = await Sessions.findByPk(session_id);
+    if (!session) {
+      return next(new ErrorHandler("Session not found."));
     }
-}
+    const newSession = await Sessions.update(
+      {
+        session_description: session_description,
+        instructor_name: instructor_name,
+        session_duration: session_duration,
+        date: date,
+        start_time: start_time,
+        end_time: end_time,
+        session_pricing: session_pricing,
+        session_type: session_type,
+        slug: slug,
+        seo_title: seo_title,
+        status: status,
+      },
+      { where: { session_id: session_id } }
+    );
+    const updatedSession = await Sessions.findByPk(session_id);
 
-exports.blockSession = async (req,res,next) => {
-  try{
-      const session_id = req.query.session_id;
-      const blockSession = await Sessions.update({
-          status:0
-      },{where:{session_id:session_id}})
-      const blockSessions = await Sessions.findByPk(session_id);
-     
-      const successHandler = new SuccessHandler({
-        blockSessions: {
-          ...blockSessions.toJSON(),  
-        }
-      }, 'Session blocked successfully.');
-         
-      return successHandler.send(res, 200);
-  }catch (error) {
-      return next(new ErrorHandler(error.message, false, 200));
-  }
-}
+    const successHandler = new SuccessHandler(
+      {
+        session: {
+          ...updatedSession.toJSON(),
+        },
+      },
+      "Session updated successfully."
+    );
 
-exports.unblockSession = async (req,res,next) => {
-  try{
-      const session_id = req.query.session_id;
-      const blockSession = await Sessions.update({
-          status:1
-      },{where:{session_id:session_id}})
-      const blockSessions = await Sessions.findByPk(session_id);
-     
-      const successHandler = new SuccessHandler({
-        blockSessions: {
-          ...blockSessions.toJSON(),  
-        }
-      }, 'Session unblocked successfully.');
-         
-      return successHandler.send(res, 200);
-  }catch (error) {
-      return next(new ErrorHandler(error.message, false, 200));
+    return successHandler.send(res, 200);
+  } catch (error) {
+    return next(new ErrorHandler(error.message, false, 200));
   }
-}
+};
+
+exports.blockSession = async (req, res, next) => {
+  try {
+    const session_id = req.query.session_id;
+    const blockSession = await Sessions.update(
+      {
+        status: 0,
+      },
+      { where: { session_id: session_id } }
+    );
+    const blockSessions = await Sessions.findByPk(session_id);
+
+    const successHandler = new SuccessHandler(
+      {
+        blockSessions: {
+          ...blockSessions.toJSON(),
+        },
+      },
+      "Session blocked successfully."
+    );
+
+    return successHandler.send(res, 200);
+  } catch (error) {
+    return next(new ErrorHandler(error.message, false, 200));
+  }
+};
+
+exports.unblockSession = async (req, res, next) => {
+  try {
+    const session_id = req.query.session_id;
+    const blockSession = await Sessions.update(
+      {
+        status: 1,
+      },
+      { where: { session_id: session_id } }
+    );
+    const blockSessions = await Sessions.findByPk(session_id);
+
+    const successHandler = new SuccessHandler(
+      {
+        blockSessions: {
+          ...blockSessions.toJSON(),
+        },
+      },
+      "Session unblocked successfully."
+    );
+
+    return successHandler.send(res, 200);
+  } catch (error) {
+    return next(new ErrorHandler(error.message, false, 200));
+  }
+};
 
 exports.getSessionById = async (req, res, next) => {
   try {
@@ -448,28 +548,30 @@ exports.getSessionById = async (req, res, next) => {
     const session = await Sessions.findByPk(session_id);
 
     if (!session) {
-  
-      return next(new ErrorHandler('Session not found.'));
+      return next(new ErrorHandler("Session not found."));
     }
 
-  
-    const successResponse = new SuccessHandler({ session: session }, 'Session found successfully.');
+    const successResponse = new SuccessHandler(
+      { session: session },
+      "Session found successfully."
+    );
     return successResponse.send(res, 200);
   } catch (error) {
-  
-    return next(new ErrorHandler('Session not found.'));
+    return next(new ErrorHandler("Session not found."));
   }
 };
 
 exports.getSessions = async (req, res, next) => {
   try {
-      const session = await Sessions.findAll();
-    
+    const session = await Sessions.findAll();
 
-      const successResponse = new SuccessHandler({ session: session}, 'Session found successfully');
-      return successResponse.send(res, 200);
+    const successResponse = new SuccessHandler(
+      { session: session },
+      "Session found successfully"
+    );
+    return successResponse.send(res, 200);
   } catch (error) {
-      return next(new ErrorHandler(error.message));
+    return next(new ErrorHandler(error.message));
   }
 };
 exports.update = async (req, res) => {

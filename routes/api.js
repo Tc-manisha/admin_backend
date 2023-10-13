@@ -1,4 +1,6 @@
 const express = require("express");
+const multer = require('multer');
+const path= require('path');
 const { catchErrors } = require("../handlers/errorHandlers");
 
 const router = express.Router();
@@ -9,8 +11,37 @@ const clientController = require("../controllers/clientController");
 const leadController = require("../controllers/leadController");
 const productController = require("../controllers/productController");
 
-//_______________________________ Admin management_______________________________
 
+
+var liverurlnew = './image';
+
+const storage = multer.diskStorage({
+    destination:(req,file,cb) =>{
+        if(file.fieldname == 'studio_img'){
+            cb(null,liverurlnew+"/studio_img")
+        } 
+    },
+   
+    filename: (req, file, cb) => {
+      const filename = `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`;
+      console.log("Generated Filename:", filename); // Log the filename to the console
+      cb(null, filename);
+  }
+    
+})
+
+
+const upload = multer({
+    storage:storage
+})
+
+//_______________________________ Admin management_______________________________
+router.route('/admin/create-studio').post(upload.single('studio_img'), catchErrors(adminController.createstudio));
+
+router.route("/admin/get-studio").get(catchErrors(adminController.getstudio));
+router.route("/admin/get-studio-service-by-id/:studio_id").get(catchErrors(adminController.getStudioById));
+router.route("/admin/delete-studio").post(catchErrors( adminController.deleteStudio));
+router.route("/admin/update-studio/:Studio_id").post(upload.single('studio_img'), catchErrors(adminController.updatestudio));
 router.route("/admin/create-services").post(catchErrors(adminController.createService));
 // router.get("/admin/get-services").get(catchErrors(adminController.getServices));
 router.route("/admin/get-services").get(catchErrors(adminController.getServices));

@@ -5,8 +5,10 @@ const Admin = require("../models/Admin");
 const Admins = db.Admin;
 const service = require("../models/services");
 const services = db.services;
-const session = require("../models/services");
+const session = require("../models/session");
 const Sessions = db.session;
+const Studio = require("../models/studio");
+const Studios = db.Studio;
 const ErrorHandler = require("../utils/ErrorHandler");
 const SuccessHandler = require("../utils/succesHandler");
 
@@ -138,10 +140,154 @@ exports.read = async (req, res) => {
  *  @returns {string} Message
  */
 
+
+exports.createstudio = async (req, res, next) => {
+
+  const {name, email, contact_no, description, rating } = req.body;
+
+  try {
+    
+const existingstudio = await Studios.findAll({
+  where: {
+    email: email,
+  }
+});
+
+    if (!existingstudio) {
+      return next(new ErrorHandler(error.message));
+    }
+    const status = 1;
+    // console.log(req.file.filename)
+    const newStudio = await Studios.create({
+      name: name,
+      email: email,
+      contact_no: contact_no,
+      description: description,
+      rating: rating,
+      studio_img: req.file.filename,
+      status:status
+  });
+    const successHandler = new SuccessHandler({
+       newStudio
+    }, 'studio created successfully.');
+    return successHandler.send(res, 200);
+  } catch (error) {
+    return next(new ErrorHandler(error.message));
+  }
+};
+exports.getstudio = async (req, res, next) => {
+    try {
+        const Studio = await Studios.findAll({
+      
+        });
+        
+        if (!Studio || Studio.length === 0) {
+            return next(new ErrorHandler(error.message));
+        }
+        const successResponse = new SuccessHandler({  Studio }, 'Studio found successfully');
+        return successResponse.send(res);
+    } catch (error) {
+        return next(new ErrorHandler(error.message));
+    }
+};
+
+exports.getStudioById = async (req, res, next) => {
+  const { studio_id } = req.params; 
+  try {
+      const studio = await Studios.findOne({
+          where: {
+              Studio_id: studio_id,
+              status: 1,
+          },
+      });
+      if (!studio) {
+          return next(new ErrorHandler(error.message));
+      }
+      const service = await services.findOne({
+          where: {
+              Studio_id: studio_id,
+          },
+      });
+      let parsedSeoTags;
+        if (service && service.seo_tags) {
+            try {
+                parsedSeoTags = JSON.parse(service.seo_tags);
+            } catch (error) {
+                console.error('Error parsing seo_tags:', error);
+                parsedSeoTags = {}; 
+            }
+        } else {
+            parsedSeoTags = {}; 
+        }
+
+        const successResponse = new SuccessHandler({
+                ...service.toJSON(),
+                seo_tags: parsedSeoTags,
+            
+        }, 'Studio and service found successfully');
+      return successResponse.send(res);
+  } catch (error) {
+      return next(new ErrorHandler(error.message));
+  }
+};
+exports.deleteStudio = async (req, res, next) => {
+  try {
+    const { service_id } = req.params;
+    const Studio = await Studios.findByPk(service_id);
+    if (!Studio) {
+        return next(new ErrorHandler(error.message));
+    }
+    await Studios.update({ status: 0 });
+    const successResponse = new SuccessHandler(
+      {},
+      "Studio soft deleted successfully."
+    );
+    return successResponse.send(res, 200);
+  } catch (error) {
+    return next(new ErrorHandler(error.message));
+  }
+};
+exports.updatestudio=async(req,res,next)=>{
+
+  const {Studio_id} = req.params;
+  const { name, email, contact_no, description, rating } = req.body;
+  try{
+      const studio = await Studios.findByPk(Studio_id);
+
+      if (!studio) {
+          return next(new ErrorHandler(error.message));
+      }
+     const updatedstudio = await Studios.update(
+          {
+            email : email,
+            name:name,
+            contact_no:contact_no,
+            description:description,
+            rating:rating,
+            studio_img: req.file.filename
+          },
+          {
+            where: {
+              Studio_id: Studio_id
+            }
+          }
+        )
+
+        const successResponse = new SuccessHandler(
+          updatedstudio,
+                "Service updated successfully."
+              );
+              return successResponse.send(res, 200);
+
+          } catch (error) {
+      return next(new ErrorHandler(error.message));
+  }
+}
 exports.createService = async (req, res, next) => {
   try {
     const {
       name,
+      Studio_id,
       description,
       seo_title,
       seo_description,
@@ -162,6 +308,7 @@ exports.createService = async (req, res, next) => {
 
     const newService = await services.create({
       name: name.toLowerCase(),
+      Studio_id:Studio_id,
       description: description,
       status: status,
       seo_title: seo_title,

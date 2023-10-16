@@ -1,5 +1,5 @@
-const moment = require('moment');
-const  {Op}  = require('sequelize');
+const moment = require("moment");
+const { Op, Sequelize } = require("sequelize");
 const db = require("../db/databse");
 const Admin = require("../models/Admin");
 const Admins = db.Admin;
@@ -11,7 +11,6 @@ const Studio = require("../models/studio");
 const Studios = db.Studio;
 const ErrorHandler = require("../utils/ErrorHandler");
 const SuccessHandler = require("../utils/succesHandler");
-
 
 /**
  *  Get all documents of a Model
@@ -140,18 +139,15 @@ exports.read = async (req, res) => {
  *  @returns {string} Message
  */
 
-
 exports.createstudio = async (req, res, next) => {
-
-  const {name, email, contact_no, description, rating } = req.body;
+  const { name, email, contact_no, description, rating } = req.body;
 
   try {
-    
-const existingstudio = await Studios.findAll({
-  where: {
-    email: email,
-  }
-});
+    const existingstudio = await Studios.findAll({
+      where: {
+        email: email,
+      },
+    });
 
     if (!existingstudio) {
       return next(new ErrorHandler(error.message));
@@ -165,69 +161,75 @@ const existingstudio = await Studios.findAll({
       description: description,
       rating: rating,
       studio_img: req.file.filename,
-      status:status
-  });
-    const successHandler = new SuccessHandler({
-       newStudio
-    }, 'studio created successfully.');
+      status: status,
+    });
+    const successHandler = new SuccessHandler(
+      {
+        newStudio,
+      },
+      "studio created successfully."
+    );
     return successHandler.send(res, 200);
   } catch (error) {
     return next(new ErrorHandler(error.message));
   }
 };
 exports.getstudio = async (req, res, next) => {
-    try {
-        const Studio = await Studios.findAll({
-      
-        });
-        
-        if (!Studio || Studio.length === 0) {
-            return next(new ErrorHandler(error.message));
-        }
-        const successResponse = new SuccessHandler({  Studio }, 'Studio found successfully');
-        return successResponse.send(res);
-    } catch (error) {
-        return next(new ErrorHandler(error.message));
+  try {
+    const Studio = await Studios.findAll({});
+
+    if (!Studio || Studio.length === 0) {
+      return next(new ErrorHandler(error.message));
     }
+    const successResponse = new SuccessHandler(
+      { Studio },
+      "Studio found successfully"
+    );
+    return successResponse.send(res);
+  } catch (error) {
+    return next(new ErrorHandler(error.message));
+  }
 };
 
 exports.getStudioById = async (req, res, next) => {
-  const { studio_id } = req.params; 
+  const { studio_id } = req.params;
   try {
-      const studio = await Studios.findOne({
-          where: {
-              Studio_id: studio_id,
-              status: 1,
-          },
-      });
-      if (!studio) {
-          return next(new ErrorHandler(error.message));
-      }
-      const service = await services.findOne({
-          where: {
-              Studio_id: studio_id,
-          },
-      });
-      let parsedSeoTags;
-        if (service && service.seo_tags) {
-            try {
-                parsedSeoTags = JSON.parse(service.seo_tags);
-            } catch (error) {
-                console.error('Error parsing seo_tags:', error);
-                parsedSeoTags = {}; 
-            }
-        } else {
-            parsedSeoTags = {}; 
-        }
-
-        const successResponse = new SuccessHandler({
-                ...service.toJSON(),
-                seo_tags: parsedSeoTags,
-            
-        }, 'Studio and service found successfully');
-      return successResponse.send(res);
-  } catch (error) {
+    const studio = await Studios.findOne({
+      where: {
+        Studio_id: studio_id,
+        status: 1,
+      },
+    });
+    if (!studio) {
       return next(new ErrorHandler(error.message));
+    }
+    const service = await services.findOne({
+      where: {
+        Studio_id: studio_id,
+      },
+    });
+    let parsedSeoTags;
+    if (service && service.seo_tags) {
+      try {
+        parsedSeoTags = JSON.parse(service.seo_tags);
+      } catch (error) {
+        console.error("Error parsing seo_tags:", error);
+        parsedSeoTags = {};
+      }
+    } else {
+      parsedSeoTags = {};
+    }
+
+    const successResponse = new SuccessHandler(
+      {
+        ...service.toJSON(),
+        seo_tags: parsedSeoTags,
+      },
+      "Studio and service found successfully"
+    );
+    return successResponse.send(res);
+  } catch (error) {
+    return next(new ErrorHandler(error.message));
   }
 };
 exports.deleteStudio = async (req, res, next) => {
@@ -235,7 +237,7 @@ exports.deleteStudio = async (req, res, next) => {
     const { service_id } = req.params;
     const Studio = await Studios.findByPk(service_id);
     if (!Studio) {
-        return next(new ErrorHandler(error.message));
+      return next(new ErrorHandler(error.message));
     }
     await Studios.update({ status: 0 });
     const successResponse = new SuccessHandler(
@@ -247,42 +249,40 @@ exports.deleteStudio = async (req, res, next) => {
     return next(new ErrorHandler(error.message));
   }
 };
-exports.updatestudio=async(req,res,next)=>{
-
-  const {Studio_id} = req.params;
+exports.updatestudio = async (req, res, next) => {
+  const { Studio_id } = req.params;
   const { name, email, contact_no, description, rating } = req.body;
-  try{
-      const studio = await Studios.findByPk(Studio_id);
+  try {
+    const studio = await Studios.findByPk(Studio_id);
 
-      if (!studio) {
-          return next(new ErrorHandler(error.message));
-      }
-     const updatedstudio = await Studios.update(
-          {
-            email : email,
-            name:name,
-            contact_no:contact_no,
-            description:description,
-            rating:rating,
-            studio_img: req.file.filename
-          },
-          {
-            where: {
-              Studio_id: Studio_id
-            }
-          }
-        )
-
-        const successResponse = new SuccessHandler(
-          updatedstudio,
-                "Service updated successfully."
-              );
-              return successResponse.send(res, 200);
-
-          } catch (error) {
+    if (!studio) {
       return next(new ErrorHandler(error.message));
+    }
+    const updatedstudio = await Studios.update(
+      {
+        email: email,
+        name: name,
+        contact_no: contact_no,
+        description: description,
+        rating: rating,
+        studio_img: req.file.filename,
+      },
+      {
+        where: {
+          Studio_id: Studio_id,
+        },
+      }
+    );
+
+    const successResponse = new SuccessHandler(
+      updatedstudio,
+      "Service updated successfully."
+    );
+    return successResponse.send(res, 200);
+  } catch (error) {
+    return next(new ErrorHandler(error.message));
   }
-}
+};
 exports.createService = async (req, res, next) => {
   try {
     const {
@@ -308,7 +308,7 @@ exports.createService = async (req, res, next) => {
 
     const newService = await services.create({
       name: name.toLowerCase(),
-      Studio_id:Studio_id,
+      Studio_id: Studio_id,
       description: description,
       status: status,
       seo_title: seo_title,
@@ -497,59 +497,82 @@ exports.createSession = async (req, res, next) => {
     } = req.body;
 
     const status = 1;
-    const parsedStartTime = moment(`${date} ${start_time}`, 'DD/MM/YY hh:mm A');
-    const parsedEndTime = moment(`${date} ${end_time}`, 'DD/MM/YY hh:mm A');
+    const parsedStartTime = moment(`${date} ${start_time}`, "DD/MM/YY hh:mm A");
+    const parsedEndTime = moment(`${date} ${end_time}`, "DD/MM/YY hh:mm A");
 
     // Check if the exact start or end time session already exists
-    const exactStartSession = await Sessions.findOne({
-      where: {
-        service_id: service_id,
-        date: date,
-        start_time: parsedStartTime.format('HH:mm'),
-      },
-    });
+    // const exactStartSession = await Sessions.findOne({
+    //   where: {
+    //     service_id: service_id,
+    //     date: date,
+    //     start_time: parsedStartTime.format('HH:mm'),
+    //   },
+    // });
 
-    const exactEndSession = await Sessions.findOne({
-      where: {
-        service_id: service_id,
-        date: date,
-        end_time: parsedEndTime.format('HH:mm'),
-      },
-    });
+    // const exactEndSession = await Sessions.findOne({
+    //   where: {
+    //     service_id: service_id,
+    //     date: date,
+    //     end_time: parsedEndTime.format('HH:mm'),
+    //   },
+    // });
 
-    if (exactStartSession || exactEndSession) {
-      return next(
-        new ErrorHandler('Session with the exact start or end time already exists for this service.', false)
-      );
-    }
+    // if (exactStartSession || exactEndSession) {
+    //   return next(
+    //     new ErrorHandler('Session with the exact start or end time already exists for this service.', false)
+    //   );
+    // }
 
-    // Check for overlapping time with existing sessions
-    const overlappingSessions = await Sessions.findAll({
+    // // Check for overlapping time with existing sessions
+    // const overlappingSessions = await Sessions.findAll({
+    //   where: {
+    //     service_id: service_id,
+    //     date: date,
+    //     [Op.or]: [
+    //       {
+    //         start_time: {
+    //           [Op.between]: [parsedStartTime.format('HH:mm'), parsedEndTime.format('HH:mm')],
+    //         },
+    //       },
+    //       {
+    //         end_time: {
+    //           [Op.between]: [parsedStartTime.format('HH:mm'), parsedEndTime.format('HH:mm')],
+    //         },
+    //       },
+    //     ],
+    //   },
+    // });
+
+    // if (overlappingSessions.length > 0) {
+    //   return next(
+    //     new ErrorHandler('Session with overlapping time already exists for this service.', false)
+    //   );
+    // }
+
+    // Check if any slot overlaps with the specified time period
+    const existingSlot = await Sessions.findOne({
       where: {
-        service_id: service_id,
         date: date,
-        [Op.or]: [
+        [Sequelize.Op.or]: [
           {
-            start_time: {
-              [Op.between]: [parsedStartTime.format('HH:mm'), parsedEndTime.format('HH:mm')],
-            },
+            start_time: { [Sequelize.Op.between]: [start_time, end_time] },
           },
           {
-            end_time: {
-              [Op.between]: [parsedStartTime.format('HH:mm'), parsedEndTime.format('HH:mm')],
-            },
+            end_time: { [Sequelize.Op.between]: [start_time, end_time] },
           },
         ],
       },
     });
 
-    if (overlappingSessions.length > 0) {
+    console.log({ existingSlot });
+
+    if (existingSlot) {
       return next(
-        new ErrorHandler('Session with overlapping time already exists for this service.', false)
+        new ErrorHandler(
+          "Session with overlapping time already exists for this service."
+        )
       );
     }
-    
-  
 
     const newSession = await Sessions.create({
       service_id: service_id,
@@ -557,8 +580,10 @@ exports.createSession = async (req, res, next) => {
       instructor_name: instructor_name,
       session_duration: session_duration,
       date: date,
-      start_time: parsedStartTime.format('HH:mm'),
-      end_time: parsedEndTime.format('HH:mm'),
+      // start_time: parsedStartTime.format("HH:mm"),
+      // end_time: parsedEndTime.format("HH:mm"),
+      start_time: start_time,
+      end_time: end_time,
       session_pricing: session_pricing,
       session_type: session_type,
       slug: slug,
@@ -573,7 +598,7 @@ exports.createSession = async (req, res, next) => {
           status: status,
         },
       },
-      'Session created successfully.'
+      "Session created successfully."
     );
 
     return successHandler.send(res, 200);

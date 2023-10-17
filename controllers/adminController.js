@@ -242,7 +242,7 @@ exports.deleteStudio = async (req, res, next) => {
   try {
     const { studio_id } = req.params;
     const Studio = await Studios.findByPk(studio_id);
-    console.log(studio)
+    console.log(Studio)
     if (!Studio) {
       return next(new ErrorHandler(error.message));
     }
@@ -506,6 +506,7 @@ exports.createSession = async (req, res, next) => {
       session_pricing,
       session_type,
       slug,
+      title,
       seo_title,
     } = req.body;
 
@@ -597,8 +598,10 @@ exports.createSession = async (req, res, next) => {
       // end_time: parsedEndTime.format("HH:mm"),
       start_time: start_time,
       end_time: end_time,
+      title:title,
       session_pricing: session_pricing,
       session_type: session_type,
+      session_img:req.file.filename,
       slug: slug,
       seo_title: seo_title,
       status: status,

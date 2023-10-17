@@ -23,6 +23,9 @@ const storage = multer.diskStorage({
         if(file.fieldname == 'services_img'){
           cb(null,liverurlnew+"/services_img")
       } 
+      if(file.fieldname == 'session_img'){
+        cb(null,liverurlnew+"/session_img")
+    } 
     },
    
     filename: (req, file, cb) => {
@@ -52,7 +55,7 @@ router.route("/admin/get-service-by-id/:service_id").get(catchErrors(adminContro
 router.route("/admin/deactive-services/:service_id").post(catchErrors(adminController.deactiveService));
 router.route("/admin/active-services/:service_id").post(catchErrors(adminController.activeService));
 router.route("/admin/update-services/:service_id").post(catchErrors(adminController.updateService));
-router.route("/admin/create-sessions").post(catchErrors(adminController.createSession));
+router.route("/admin/create-sessions").post(upload.single('session_img'),catchErrors(adminController.createSession));
 router.route("/admin/update-sessions").post(catchErrors(adminController.updateSession));
 router.route("/admin/block-sessions").post(catchErrors(adminController.blockSession));
 router.route("/admin/unblock-sessions").post(catchErrors(adminController.unblockSession));

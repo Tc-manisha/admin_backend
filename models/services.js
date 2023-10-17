@@ -13,6 +13,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+    
+      services_img :{
+        type:DataTypes.STRING,
+        allowNull: false,
+      },
       description: {
         type: DataTypes.TEXT('long'),
         allowNull: true,

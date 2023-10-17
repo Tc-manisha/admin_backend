@@ -1,12 +1,22 @@
 module.exports = (sequelize, DataTypes) => {
-    const Session = sequelize.define('Session', {
+  const Session = sequelize.define(
+    "Session",
+    {
       session_id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
       },
-      service_id:{
+      service_id: {
         type: DataTypes.STRING,
+        allowNull: false,
+      },
+      title: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      session_img :{
+        type:DataTypes.STRING,
         allowNull: false,
       },
       session_description: {
@@ -22,14 +32,14 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
       date: {
-        type: DataTypes.DATEONLY,
-        allowNull: true,
-      },
-      start_time:{
         type: DataTypes.DATE,
         allowNull: true,
       },
-      end_time:{
+      start_time: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      end_time: {
         type: DataTypes.DATE,
         allowNull: true,
       },
@@ -56,8 +66,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       timestamps: true,
-    });
-  
-    return Session;
-  };
-  
+    }
+  );
+
+  return Session;
+};

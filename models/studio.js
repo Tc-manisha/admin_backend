@@ -21,8 +21,8 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
         studio_img :{
-          type:DataTypes.STRING
-
+          type:DataTypes.STRING,
+          allowNull: false,
         },
         contact_no: {
           type: DataTypes.STRING, // You can adjust the data type according to your requirements

@@ -22,15 +22,15 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
       date: {
-        type: DataTypes.STRING,
+        type: DataTypes.DATEONLY,
         allowNull: true,
       },
       start_time:{
-        type: DataTypes.STRING,
+        type: DataTypes.DATE,
         allowNull: true,
       },
       end_time:{
-        type: DataTypes.STRING,
+        type: DataTypes.DATE,
         allowNull: true,
       },
       session_pricing: {

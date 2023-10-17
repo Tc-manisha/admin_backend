@@ -3,14 +3,19 @@ const  {Op}  = require('sequelize');
 const db = require("../db/databse");
 const Admin = require("../models/Admin");
 const Admins = db.Admin;
+const User = require("../models/user");
+const users =db.User
 const service = require("../models/services");
 const services = db.services;
 const session = require("../models/session");
 const Sessions = db.session;
 const Studio = require("../models/studio");
 const Studios = db.Studio;
+const booking = require("../models/booking");
+const bookings =db.booking
 const ErrorHandler = require("../utils/ErrorHandler");
 const SuccessHandler = require("../utils/succesHandler");
+
 
 
 /**
@@ -142,22 +147,19 @@ exports.read = async (req, res) => {
 
 
 exports.createstudio = async (req, res, next) => {
-
-  const {name, email, contact_no, description, rating } = req.body;
-
   try {
-    
-const existingstudio = await Studios.findAll({
+    const {name, email, contact_no, description, rating } = req.body;
+const existingstudio = await Studios.findOne({
   where: {
     email: email,
   }
-});
+});            
 
-    if (!existingstudio) {
-      return next(new ErrorHandler(error.message));
-    }
-    const status = 1;
-    // console.log(req.file.filename)
+                         
+if (existingstudio) {
+  return next(new ErrorHandler("email already exit"));
+}
+  let status=1;
     const newStudio = await Studios.create({
       name: name,
       email: email,
@@ -165,13 +167,14 @@ const existingstudio = await Studios.findAll({
       description: description,
       rating: rating,
       studio_img: req.file.filename,
-      status:status
+ status:status
   });
     const successHandler = new SuccessHandler({
        newStudio
     }, 'studio created successfully.');
-    return successHandler.send(res, 200);
+    return successHandler.send(res);
   } catch (error) {
+    console.log(error); 
     return next(new ErrorHandler(error.message));
   }
 };
@@ -232,18 +235,22 @@ exports.getStudioById = async (req, res, next) => {
 };
 exports.deleteStudio = async (req, res, next) => {
   try {
-    const { service_id } = req.params;
-    const Studio = await Studios.findByPk(service_id);
+    const { studio_id } = req.params;
+    const Studio = await Studios.findByPk(studio_id);
+    console.log(studio)
     if (!Studio) {
         return next(new ErrorHandler(error.message));
     }
-    await Studios.update({ status: 0 });
+    await Studios.update({ status: 0 }, {
+      where: { Studio_id: studio_id }
+    });
     const successResponse = new SuccessHandler(
       {},
       "Studio soft deleted successfully."
     );
     return successResponse.send(res, 200);
   } catch (error) {
+    console.log(error)
     return next(new ErrorHandler(error.message));
   }
 };
@@ -257,24 +264,27 @@ exports.updatestudio=async(req,res,next)=>{
       if (!studio) {
           return next(new ErrorHandler(error.message));
       }
-     const updatedstudio = await Studios.update(
-          {
-            email : email,
-            name:name,
-            contact_no:contact_no,
-            description:description,
-            rating:rating,
-            studio_img: req.file.filename
-          },
-          {
-            where: {
-              Studio_id: Studio_id
-            }
-          }
-        )
+      let updatedFields = {
+        email: email,
+        name: name,
+        contact_no: contact_no,
+        description: description,
+        rating: rating,
+      };
+  
+      // Check if image is being updated
+      if (req.file) {
+        updatedFields.studio_img = req.file.filename;
+      }
+  
+      await Studios.update(updatedFields, {
+        where: {
+          Studio_id: Studio_id,
+        },
+      });
 
         const successResponse = new SuccessHandler(
-          updatedstudio,
+        {},
                 "Service updated successfully."
               );
               return successResponse.send(res, 200);
@@ -315,6 +325,7 @@ exports.createService = async (req, res, next) => {
       seo_description: seo_description,
       seo_slug: seo_slug,
       seo_tags: seo_tags,
+      services_img: req.file.filename,
     });
 
     const successHandler = new SuccessHandler(
@@ -407,7 +418,9 @@ exports.deactiveService = async (req, res, next) => {
     if (!service) {
       return next(new ErrorHandler("Service not found."));
     }
-    await service.update({ status: 0 });
+    await service.update({ status: 0 },{
+      where: { service_id: service_id }
+    });
     const successResponse = new SuccessHandler(
       {},
       "Service soft deleted successfully."
@@ -524,7 +537,7 @@ exports.createSession = async (req, res, next) => {
     }
 
     // Check for overlapping time with existing sessions
-    const overlappingSessions = await Sessions.findAll({
+    const overlappingSessions = await Sessions.findOne({
       where: {
         service_id: service_id,
         date: date,
@@ -915,5 +928,50 @@ exports.search = async (req, res) => {
       result: [],
       message: "Oops there is an Error",
     });
+  }
+};
+
+
+
+// exports.getbooking=async(req,res,next)=>{
+//   const { user_id } = req.params;
+//   try {
+//     // Retrieve user bookings and include associated user information
+//     const userBookings = await Booking.findAll({
+//       where: {
+//         user_id: userId,
+//       },
+//       include: [
+//         {
+//           model: User,
+//           attributes: ['id', 'name'], // Include the user ID and name if needed
+//         },
+//       ],
+//     });
+
+//     // Calculate total payment for user's bookings
+//     const totalPayment = userBookings.reduce((total, booking) => {
+//       return total + booking.payment_amount; // Replace 'payment_amount' with the actual attribute name for payment in your Booking model
+//     }, 0);
+
+//     res.json({
+//       userBookings,
+//       totalPayment,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// }
+
+exports.getbooking = async (req, res, next) => {
+  try {
+    const booking = await bookings.findAll({
+    });
+console.log(booking)
+    res.json(booking);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };

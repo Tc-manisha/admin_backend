@@ -42,6 +42,13 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: true,
     });
   
+    Service.associate = (models) => {
+      Service.hasMany(models.Booking, {
+        foreignKey: 'service_id', // Assuming your Booking model has a foreign key 'service_id' to associate with the Service model
+        as: 'bookings', // Alias for the association, you can change it as needed
+      });
+    };
+  
     return Service;
   };
   

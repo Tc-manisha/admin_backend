@@ -20,6 +20,9 @@ const storage = multer.diskStorage({
         if(file.fieldname == 'studio_img'){
             cb(null,liverurlnew+"/studio_img")
         } 
+        if(file.fieldname == 'services_img'){
+          cb(null,liverurlnew+"/services_img")
+      } 
     },
    
     filename: (req, file, cb) => {
@@ -40,9 +43,9 @@ router.route('/admin/create-studio').post(upload.single('studio_img'), catchErro
 
 router.route("/admin/get-studio").get(catchErrors(adminController.getstudio));
 router.route("/admin/get-studio-service-by-id/:studio_id").get(catchErrors(adminController.getStudioById));
-router.route("/admin/delete-studio").post(catchErrors( adminController.deleteStudio));
+router.route("/admin/delete-studio/:studio_id").post(catchErrors( adminController.deleteStudio));
 router.route("/admin/update-studio/:Studio_id").post(upload.single('studio_img'), catchErrors(adminController.updatestudio));
-router.route("/admin/create-services").post(catchErrors(adminController.createService));
+router.route("/admin/create-services").post(upload.single('services_img'),catchErrors(adminController.createService));
 // router.get("/admin/get-services").get(catchErrors(adminController.getServices));
 router.route("/admin/get-services").get(catchErrors(adminController.getServices));
 router.route("/admin/get-service-by-id/:service_id").get(catchErrors(adminController.getServicesById));
@@ -53,6 +56,7 @@ router.route("/admin/create-sessions").post(catchErrors(adminController.createSe
 router.route("/admin/update-sessions").post(catchErrors(adminController.updateSession));
 router.route("/admin/block-sessions").post(catchErrors(adminController.blockSession));
 router.route("/admin/unblock-sessions").post(catchErrors(adminController.unblockSession));
+router.route("/admin/get-booking").get(catchErrors(adminController.getbooking));
 router.route("/admin/get-session-by-id/:session_id").get(catchErrors(adminController.getSessionById));
 router.route("/admin/get-session").get(catchErrors(adminController.getSessions));
 router.route("/admin/update/:id").patch(catchErrors(adminController.update));

@@ -36,11 +36,11 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
       start_time: {
-        type: DataTypes.DATE,
+        type: DataTypes.TIME,
         allowNull: true,
       },
       end_time: {
-        type: DataTypes.DATE,
+        type: DataTypes.TIME,
         allowNull: true,
       },
       session_pricing: {

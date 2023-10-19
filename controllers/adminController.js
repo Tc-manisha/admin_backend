@@ -203,50 +203,63 @@ exports.getStudioById = async (req, res, next) => {
     const studio = await Studios.findOne({
       where: {
         Studio_id: studio_id,
-        status: 1,
       },
     });
+    
     if (!studio) {
-      return next(new ErrorHandler(error.message));
+      return next(new ErrorHandler("Studio not found"));
     }
-    const service = await services.findOne({
+
+    const service = await services.findAll({
       where: {
         Studio_id: studio_id,
       },
     });
-    let parsedSeoTags;
-    if (service && service.seo_tags) {
-      try {
-        parsedSeoTags = JSON.parse(service.seo_tags);
-      } catch (error) {
-        console.error("Error parsing seo_tags:", error);
-        parsedSeoTags = {};
-      }
-    } else {
-      parsedSeoTags = {};
+
+    if (!service || service.length === 0) {
+      return next(new ErrorHandler("Services not found"));
     }
+
+    const parsedServices = service.map(service => {
+      let parsedSeoTags = {};
+      if (service.seo_tags) {
+        try {
+          parsedSeoTags = JSON.parse(service.seo_tags);
+        } catch (error) {
+          console.error("Error parsing seo_tags:", error);
+        }
+      }
+      return {
+        ...service.toJSON(),
+        seo_tags: parsedSeoTags,
+      };
+    });
 
     const successResponse = new SuccessHandler(
       {
-        ...service.toJSON(),
-        seo_tags: parsedSeoTags,
+        services: parsedServices,
       },
-      "Studio and service found successfully"
+      "Studio and services found successfully"
     );
+
     return successResponse.send(res);
   } catch (error) {
     return next(new ErrorHandler(error.message));
   }
 };
+
 exports.deleteStudio = async (req, res, next) => {
   try {
     const { studio_id } = req.params;
     const Studio = await Studios.findByPk(studio_id);
-    console.log(Studio)
+  
     if (!Studio) {
-      return next(new ErrorHandler(error.message));
+      return next(new ErrorHandler("studio not found"));
     }
-    await Studios.update({ status: 0 }, {
+    const newStatus = Studio.status ? 0 : 1;
+
+  
+    await Studios.update({ status: newStatus }, {
       where: { Studio_id: studio_id }
     });
     const successResponse = new SuccessHandler(
@@ -266,9 +279,9 @@ exports.updatestudio = async (req, res, next) => {
     const studio = await Studios.findByPk(Studio_id);
 
     if (!studio) {
-      return next(new ErrorHandler(error.message));
+      return next(new ErrorHandler("studio not found"));
     }
-    const updatedstudio = await Studios.update(
+   await Studios.update(
       {
         email: email,
         name: name,
@@ -283,9 +296,10 @@ exports.updatestudio = async (req, res, next) => {
         },
       }
     );
+    const updatedSession = await Studios.findByPk(Studio_id);
 
     const successResponse = new SuccessHandler(
-      updatedstudio,
+      updatedSession.toJSON(),
       "Service updated successfully."
     );
     return successResponse.send(res, 200);
@@ -635,7 +649,7 @@ exports.updateSession = async (req, res, next) => {
       session_type,
       slug,
       seo_title,
-      status,
+    session_img,
       start_time,
       end_time,
     } = req.body;
@@ -644,7 +658,7 @@ exports.updateSession = async (req, res, next) => {
     if (!session) {
       return next(new ErrorHandler("Session not found."));
     }
-    const newSession = await Sessions.update(
+ await Sessions.update(
       {
         session_description: session_description,
         instructor_name: instructor_name,
@@ -654,30 +668,30 @@ exports.updateSession = async (req, res, next) => {
         end_time: end_time,
         session_pricing: session_pricing,
         session_type: session_type,
+        session_img:req.file.filename,
         slug: slug,
         seo_title: seo_title,
-        status: status,
+      
       },
       { where: { session_id: session_id } }
     );
+   
     const updatedSession = await Sessions.findByPk(session_id);
 
-    const successHandler = new SuccessHandler(
+    const successResponse = new SuccessHandler(
       {
-        session: {
-          ...updatedSession.toJSON(),
-        },
+        ...updatedSession.toJSON(),
       },
-      "Session updated successfully."
+      "Session updated successfully"
     );
 
-    return successHandler.send(res, 200);
+    return successResponse.send(res, 200);
   } catch (error) {
     return next(new ErrorHandler(error.message, false, 200));
   }
 };
 
-exports.blockSession = async (req, res, next) => {
+exports.deactiveSession = async (req, res, next) => {
   try {
     const session_id = req.query.session_id;
     const blockSession = await Sessions.update(
@@ -703,7 +717,7 @@ exports.blockSession = async (req, res, next) => {
   }
 };
 
-exports.unblockSession = async (req, res, next) => {
+exports.activeSession = async (req, res, next) => {
   try {
     const session_id = req.query.session_id;
     const blockSession = await Sessions.update(

@@ -56,9 +56,9 @@ router.route("/admin/deactive-services/:service_id").post(catchErrors(adminContr
 router.route("/admin/active-services/:service_id").post(catchErrors(adminController.activeService));
 router.route("/admin/update-services/:service_id").post(catchErrors(adminController.updateService));
 router.route("/admin/create-sessions").post(upload.single('session_img'),catchErrors(adminController.createSession));
-router.route("/admin/update-sessions").post(catchErrors(adminController.updateSession));
-router.route("/admin/block-sessions").post(catchErrors(adminController.blockSession));
-router.route("/admin/unblock-sessions").post(catchErrors(adminController.unblockSession));
+router.route("/admin/update-sessions").post(upload.single('session_img'),catchErrors(adminController.updateSession));
+router.route("/admin/deactive-sessions").post(catchErrors(adminController.deactiveSession));
+router.route("/admin/active-sessions").post(catchErrors(adminController.activeSession));
 router.route("/admin/get-booking").get(catchErrors(adminController.getbooking));
 router.route("/admin/get-session-by-id/:session_id").get(catchErrors(adminController.getSessionById));
 router.route("/admin/get-session").get(catchErrors(adminController.getSessions));

@@ -26,11 +26,11 @@ module.exports = (sequelize, DataTypes) => {
         },
         contact_no: {
           type: DataTypes.STRING, // You can adjust the data type according to your requirements
-          allowNull: true, // Set to false if it's a required field
+          allowNull: false, // Set to false if it's a required field
         },
         description: {
           type: DataTypes.TEXT('long'),
-          allowNull: true,
+          allowNull: false,
         },
         rating: {
           type: DataTypes.FLOAT, // Assuming rating can be a floating-point number

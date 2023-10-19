@@ -21,11 +21,11 @@ module.exports = (sequelize, DataTypes) => {
       },
       session_description: {
         type: DataTypes.TEXT,
-        allowNull: true,
+        allowNull: false,
       },
       instructor_name: {
         type: DataTypes.STRING,
-        allowNull: true,
+        allowNull: false,
       },
       session_duration: {
         type: DataTypes.STRING,
@@ -33,23 +33,27 @@ module.exports = (sequelize, DataTypes) => {
       },
       date: {
         type: DataTypes.DATE,
-        allowNull: true,
+        allowNull: false,
       },
       start_time: {
         type: DataTypes.TIME,
-        allowNull: true,
+        allowNull: false,
       },
       end_time: {
         type: DataTypes.TIME,
-        allowNull: true,
+        allowNull: false,
       },
       session_pricing: {
         type: DataTypes.STRING,
-        allowNull: true,
+        allowNull: false,
+      },
+      payment_type: {
+        type: DataTypes.STRING,
+        allowNull: false,
       },
       session_type: {
         type: DataTypes.STRING,
-        allowNull: true,
+        allowNull: false,
       },
       slug: {
         type: DataTypes.STRING,
